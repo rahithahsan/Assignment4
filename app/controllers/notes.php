@@ -1,15 +1,16 @@
 <?php
 /**
- * Notes controller -- phase 1  
- * Only lists current (open) reminders.
+ * Notes controller  —  phase 1
+ * Read-only list of current reminders.
  */
 class Notes extends Controller
 {
-    /** GET /notes  →  list reminders */
+    /** GET /notes */
     public function index(): void
     {
-        $note          = $this->model('Note');
-        $data['notes'] = $note->all($_SESSION['uid']);
-        $this->view('notes/index', $data);
+        $note  = $this->model('Note');
+        $notes = $note->all($_SESSION['uid']);   // fetch array
+
+        $this->view('notes/index', compact('notes'));
     }
 }
