@@ -1,7 +1,7 @@
 <?php
 /**
- * Notes controller  —  phase 3
- * Adds Edit / Update (R+U)
+ * Notes controller  —  phase 4
+ * Adds Delete (soft-delete) to complete CRUD
  */
 class Notes extends Controller
 {
@@ -28,16 +28,12 @@ class Notes extends Controller
     }
 
     /* ---------- EDIT / UPDATE ---------- */
-
-    /** GET /notes/edit/{id} */
     public function edit(int $id): void
     {
-        $note     = $this->model('Note');
-        $noteRow  = $note->find($id, $_SESSION['uid']);
+        $noteRow = $this->model('Note')->find($id, $_SESSION['uid']);
         $this->view('notes/edit', ['note' => $noteRow]);
     }
 
-    /** POST /notes/update/{id} */
     public function update(int $id): void
     {
         $this->model('Note')->update(
@@ -50,5 +46,14 @@ class Notes extends Controller
         $_SESSION['flash'] = 'Reminder updated.';
         header('Location: /notes'); exit;
     }
+
+    /* ---------- DELETE (soft) ---------- */
+    public function delete(int $id): void
+    {
+        $this->model('Note')->softDelete($id, $_SESSION['uid']);
+        $_SESSION['flash'] = 'Reminder removed.';
+        header('Location: /notes'); exit;
+    }
 }
+
 
