@@ -5,12 +5,13 @@
  */
 class Notes extends Controller
 {
-    /* ---------- LIST ---------- */
     public function index(): void
     {
         $note  = $this->model('Note');
-        $notes = $note->all($_SESSION['uid']);
-        $this->view('notes/index', compact('notes'));
+        $notes = $note->all($_SESSION['uid']);      // ← declare
+
+        /*  pass as named variable */
+        $this->view('notes/index', ['notes' => $notes]);
     }
 
     /* ---------- CREATE ---------- */
