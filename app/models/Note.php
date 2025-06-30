@@ -1,15 +1,19 @@
 <?php
-/**
- * Note model – (step 1) connect to DB
- */
 class Note extends Model
 {
-    /** @var PDO */
     protected PDO $db;
+    public function __construct(){ $this->db = db(); }
 
-    public function __construct()
+    /** Return all *open* notes for current user */
+    public function all(int $uid): array
     {
-        // use existing PDO singleton helper
-        $this->db = db();
+        $stmt = $this->db->prepare(
+            "SELECT * FROM notes
+             WHERE user_id = ?
+             AND completed = 0
+             ORDER BY created_at DESC"
+        );
+        $stmt->execute([$uid]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
