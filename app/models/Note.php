@@ -1,5 +1,5 @@
 <?php
-class Note extends Model
+class Note
 {
     protected PDO $db;
     public function __construct(){ $this->db = db(); }
