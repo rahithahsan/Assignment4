@@ -1,78 +1,110 @@
-# COSC 4806 – Assignment 3: MVC PHP Login System (Replit + GitHub) - Rahith Ahsan
+# COSC 4806 – Assignment 4: Notes CRUD App (MVC PHP) - Rahith Ahsan
 
-## Overview
+> **Repo & live Replit**: add the links here before submission → `https://github.com/rahithahsan/Assignment4`  |  `https://replit.com/@rahsan2/Assignment4#README.md`
+>
+> **Default credentials for marking**  
+> *username*: `rahith`  |  *password*: `Test123!`
 
-This project implements a secure user authentication system using PHP 8.2 and a MariaDB database, adhering to the Model-View-Controller (MVC) architectural pattern. It includes user registration, login, and account lockout features to enhance security.
+---
 
-## Features
+## 1  Project Summary
+Building on Assignment 3’s secure login system, **Assignment 4 adds a full Create‑Read‑Update‑Delete (CRUD) workflow for personal reminders**.  A logged‑in user can:
 
-*   **MVC Architecture:** Separates concerns for maintainability and scalability.
-*   **Secure Authentication:** Utilizes `password_hash()` and `password_verify()` for secure password storage and verification.
-*   **Rate Limiting:** Implements per-user rate limiting to prevent brute-force attacks.
-*   **Logging:** Records all login attempts (successful and failed) in a database table.
-*   **Bootstrap 5 UI:** Provides a responsive and modern user interface.
+* create a reminder (subject + optional body)
+* see open vs. completed lists
+* mark any reminder *Done* / *Undo* with a single click (AJAX‑free)
+* edit the text or completion flag
+* archive (delete) a reminder – hidden from lists but preserved in DB for audit
 
-## Rubric Compliance
+All functionality follows the MVC pattern and every database query uses prepared PDO statements.
 
-| Requirement                      | Implementation                                                                                                                                                                                                                                                        |
-| :------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ≥ 20 descriptive commits       | The project has 60+ commits, each documenting small, incremental changes.  Run `git log --oneline` to verify.                                                                                                                                                            |
-| MVC enforced                     | Controllers are located in `app/controllers`, the `User` model is in `app/models`, and views are in `app/views`.  The `app/core` directory contains base classes and bootstrapping code to tie the application together.                                          |
-| LoginController & HomeController   | `LoginController` and `HomeController` are implemented in `app/controllers/login.php` and `app/controllers/home.php` respectively. Additional controllers include `create.php`, `menu.php`, and `logout.php`.                                                   |
-| User model                       | The `User` model (`app/models/User.php`) handles user authentication, password management, and account lockout logic.                                                                                                                                                   |
-| ≥ two views                      | The project includes several views such as `/views/login/index.php`, `/views/home/index.php`, `/views/create/index.php`, `/views/menu/*`, and `/views/about/index.php`.                                                                                                |
-| New account creation             | New accounts can be created via the `/create` route, handled by `Create::store()`.                                                                                                                                                                                   |
-| Login & register pages use PDO | The `User::authenticate()` and `User::register()` methods use prepared PDO statements to prevent SQL injection.                                                                                                                                                        |
-| `log` table records all attempts | The `User::logAttempt()` method inserts records into the `log` table with `username`, `outcome`, and `created_at` fields.                                                                                                                                             |
-| 3 bad → 60 s lock-out            | The `User::lockedOut()` method checks the last 3 login attempts to determine if the account should be locked.                                                                                                                                                           |
-| Basic CSS                        | The project uses Bootstrap 5 for styling, with custom CSS tweaks for cards, shadows, and icons.                                                                                                                                                                      |
-| All DB ops via PDO               | The project uses PDO exclusively for database operations. The `db()` helper function returns a PDO singleton instance.                                                                                                                                                  |
-| Shared Replit & GitHub           | The project is hosted on both Replit and GitHub.  (Remember to invite `mikebio@gmail.com` with full edit rights & push repo link to LMS.)                                                                                                                              |
+---
 
-## What I learned
-Converting a legacy procedural app into a proper MVC structure.
+## 2  Folder Map
+| Layer | Purpose | Key files |
+|-------|---------|-----------|
+| **Controllers** | route logic | `app/controllers/notes.php`, `login.php`, `home.php` |
+| **Models** | DB helpers | `app/models/Note.php`, `User.php` |
+| **Views** | UI (Bootstrap 5 + Feather icons) | `views/notes/*`, `views/templates/*` |
+| **Core** | mini‑framework bootstrap | `core/App.php`, `core/Controller.php`, `database.php` |
 
-* PDO prepared statements & error handling.
+---
 
-* Designing simple rate-limit logic without external libraries.
+## 3  Database Schema
+```sql
+-- users table unchanged from A3
+CREATE TABLE users (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  username      VARCHAR(100) UNIQUE NOT NULL,
+  password_hash CHAR(60)       NOT NULL,
+  created_at    TIMESTAMP      DEFAULT CURRENT_TIMESTAMP
+);
 
-* Writing incremental, atomic git commits – feature → test → commit.
+-- NEW notes table (A4)
+CREATE TABLE notes (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT          NOT NULL REFERENCES users(id),
+  subject    VARCHAR(255) NOT NULL,
+  body       TEXT,
+  completed  TINYINT      DEFAULT 0,   -- 0=open 1=done
+  deleted    TINYINT      DEFAULT 0,   -- 0=visible 1=archived
+  created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+);
+```
 
-* Using Replit Secrets to keep credentials out of source control.
+---
 
-* Quick UI prototyping with Bootstrap & Feather icons.
+## 4  Requirement Checklist (A4)
+| Requirement | 🚀 Implementation |
+|-------------|------------------|
+| **CRUD on `notes` table** | `Note` model exposes `insert()`, `open()`, `done()`, `find()`, `update()`, `toggle()`, `archive()`; called from `Notes` controller |
+| **Min 3 columns** | `id`, `user_id`, `subject` (+ `body`, `completed`, `deleted`, `created_at`) |
+| **Header link** | “**My Reminders**” nav item added in `templates/header.php` |
+| **Unique views** | `notes/index.php` (dash with collapsible completed list), `create.php`, `edit.php` – all custom styled, no boiler‑plate |
+| **User‑friendly update/delete** | *Done*, *Undo*, *Edit*, *Del* buttons with tool‑tips & colour cues; one‑click toggle avoids extra page load |
+| **All PDO** | every query via `$this->db->prepare()` + bound params; no raw SQL strings interpolated |
+| **≥ 20 commits** | see `git log --oneline` – 35 A4 commits, each atomic (model, controller, UI, footer fix, etc.) |
+| **Shared Replit & GitHub** | repo & Replit invite sent to *mikebio@gmail.com* with full edit rights |
 
+---
 
-## 🗺️ Sequence diagram
+## 5  How to Test (marker’s guide)
+1. **Log in** with the demo credentials above.  
+2. Click **My Reminders** → you’ll land on `/notes`.
+3. Press **New** → fill *Subject* + (optional) *Details* → *Save reminder*.<br>✔️ Flash banner confirms *Reminder created!*; item appears in *To do* list.
+4. Press **Done** – row moves to *Completed* section and counter badge increments.
+5. Expand *Completed* (blue link) → press **Undo** to return it to *To do*.
+6. Press **Edit** → change text or tick *Mark as completed* → *Save changes* → list updates accordingly.
+7. Press **Del** on a completed row – record disappears from UI (flag `deleted=1`).
+8. Verify with SQL console: `SELECT * FROM notes WHERE deleted=1;` – row still stored for audit.
+
+---
+
+## 6  Internal Flow
 ```mermaid
-%%  COSC 4806 – Assignment 3  •  MVC Request Flow
 sequenceDiagram
     autonumber
-    participant Client as Browser
-    participant Router as App (router)
-    participant C as Controller
-    participant M as User Model
+    participant U as User (browser)
+    participant C as Notes Controller
+    participant M as Note Model
     participant DB as MariaDB
-    participant V as View (Blade-PHP)
 
-    Client->>Router: HTTP GET /login
-    Router->>C: new Login@index()
-    C->>M: authenticate(u,p)
-    M->>DB: SELECT * FROM users…
-    DB-->>M: row (or NULL)
-    alt success
-        M-->>C: true
-        C->>Router: redirect /home
-        Router->>C: new Home@index()
-        C->>V: render home/index.php
-        V-->>Client: HTML + Bootstrap
-    else failure
-        M-->>C: false
-        C->>M: logAttempt(bad)
-        M->>DB: INSERT INTO log…
-        C->>Router: redirect /login?err
-        Router->>C: new Login@index()
-        C->>V: render login/index.php (flash msg)
-        V-->>Client: HTML form
-    end
+    U->>C: GET /notes
+    C->>M: open(uid) & done(uid)
+    M->>DB: SELECT … completed=0 / 1
+    DB-->>M: result sets
+    M-->>C: arrays
+    C->>U: render index view
+
+    U->>C: POST /notes/store (subject,body)
+    C->>M: insert(uid,sub,body)
+    M->>DB: INSERT INTO notes …
+    C-->>U: redirect /notes (flash)
+
+    U->>C: GET /notes/toggle/{id}
+    C->>M: toggle(id,uid)
+    M->>DB: UPDATE completed=1-completed
+    C-->>U: redirect /notes
 ```
+
+---
