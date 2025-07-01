@@ -26,20 +26,22 @@ class User
         $this->db->prepare($sql)
                  ->execute([strtolower($u), password_hash($p, PASSWORD_DEFAULT)]);
     }
-
-    /* ---------- authentication ---------- */
-    public function authenticate(string $u, string $p): bool
+    /** ---------- authentication ---------- */
+    public function authenticate(string $u, string $p): ?int   // ← return user id
     {
         $stmt = $this->db->prepare(
             "SELECT * FROM users WHERE username = ?"
         );
         $stmt->execute([strtolower($u)]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);       // ← now on stmt object
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         $ok = $row && password_verify($p, $row['password_hash']);
         $this->logAttempt($u, $ok ? 'good' : 'bad');
-        return $ok;
-    }/* ---------- lock-out (3 bad in 60 s) ---------- */
+
+        return $ok ? (int)$row['id'] : null;   // user’s PK on success, null otherwise
+    }
+
+    /* ---------- lock-out (3 bad in 60 s) ---------- */
     public function lockedOut(string $u): bool
     {
         $stmt = $this->db->prepare(
