@@ -1,17 +1,24 @@
 <?php
-/**
- * Notes controller  —  phase 4
- * Adds Delete (soft-delete) to complete CRUD
- */
 class Notes extends Controller
 {
     public function index(): void
     {
-        $note  = $this->model('Note');
-        $notes = $note->all($_SESSION['uid']);      // ← declare
+        $note = $this->model('Note');
 
-        /*  pass as named variable */
-        $this->view('notes/index', ['notes' => $notes]);
+        $data = [
+            'open' => $note->open($_SESSION['uid']),   // not-completed
+            'done' => $note->done($_SESSION['uid']),   // completed
+        ];
+
+        $this->view('notes/index', $data);
+    }
+
+    /* ---------- 1-click toggle ✔︎ ---------- */
+    public function toggle(int $id): void
+    {
+        $this->model('Note')->toggle((int)$id, $_SESSION['uid']);
+        header('Location: /notes');
+        exit;
     }
 
     /* ---------- CREATE ---------- */
@@ -25,39 +32,38 @@ class Notes extends Controller
             $_POST['body']    ?? ''
         );
         $_SESSION['flash'] = 'Reminder created!';
-        header('Location: /notes'); exit;
+        header('Location: /notes');
+        exit;
     }
 
     /* ---------- EDIT / UPDATE ---------- */
-    public function edit($id): void
+    public function edit(int|string $id): void
     {
-        $id = (int) ($id ?: $_GET['id'] ?? 0);   // defensively cast
-        $noteRow = $this->model('Note')->find($id, $_SESSION['uid']);
-        $this->view('notes/edit', ['note' => $noteRow]);
+        $id = (int)$id;
+        $note = $this->model('Note')->find($id, $_SESSION['uid']);
+        $this->view('notes/edit', ['note' => $note]);
     }
 
     public function update(int $id): void
     {
-        $id = (int)$id;
         $this->model('Note')->update(
-            $id,
+            (int)$id,
             $_SESSION['uid'],
             $_POST['subject'] ?? '',
             $_POST['body']    ?? '',
             isset($_POST['completed']) ? 1 : 0
         );
         $_SESSION['flash'] = 'Reminder updated.';
-        header('Location: /notes'); exit;
+        header('Location: /notes');
+        exit;
     }
 
-    /* ---------- DELETE (soft) ---------- */
+    /* ---------- DELETE (archive) ---------- */
     public function delete(int $id): void
     {
-        $id = (int)$id;
-        $this->model('Note')->softDelete($id, $_SESSION['uid']);
+        $this->model('Note')->archive((int)$id, $_SESSION['uid']);
         $_SESSION['flash'] = 'Reminder removed.';
-        header('Location: /notes'); exit;
+        header('Location: /notes');
+        exit;
     }
 }
-
-
