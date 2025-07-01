@@ -29,14 +29,16 @@ class Notes extends Controller
     }
 
     /* ---------- EDIT / UPDATE ---------- */
-    public function edit(int $id): void
+    public function edit($id): void
     {
+        $id = (int) ($id ?: $_GET['id'] ?? 0);   // defensively cast
         $noteRow = $this->model('Note')->find($id, $_SESSION['uid']);
         $this->view('notes/edit', ['note' => $noteRow]);
     }
 
     public function update(int $id): void
     {
+        $id = (int)$id;
         $this->model('Note')->update(
             $id,
             $_SESSION['uid'],
@@ -51,6 +53,7 @@ class Notes extends Controller
     /* ---------- DELETE (soft) ---------- */
     public function delete(int $id): void
     {
+        $id = (int)$id;
         $this->model('Note')->softDelete($id, $_SESSION['uid']);
         $_SESSION['flash'] = 'Reminder removed.';
         header('Location: /notes'); exit;
